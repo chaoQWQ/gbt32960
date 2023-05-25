@@ -53,7 +53,7 @@ public class GBT32960Encoder extends MessageToByteEncoder<ResponseMessage> {
         if (dataUnit == null) {
             return;
         }
-        //todo 后续需要客户端功能时完善
+        ReportEncoder.encodeFully(dataUnit, out);
     }
 
 
@@ -90,6 +90,14 @@ public class GBT32960Encoder extends MessageToByteEncoder<ResponseMessage> {
         //登入流水号占两个字节
 //        下级平台每登入一次,登入流水号自动加1,从1开始循环累加,最大值为65531,循环周期为天
         out.writeShort(data.getLoginDaySeq());
+        //平台用户名
+        out.writeCharSequence(data.getUsername(), ASCII_CHARSET);
+        //平台密码
+        out.writeCharSequence(data.getPassword(), ASCII_CHARSET);
+        //平台加密规则
+        /*0x01:数据不加密;0x02:数据经过RSA算法加密;0x03:数据经过AES128位算法加密;
+        “0xFE”表示异常,“0xFF”表示无效,其他预留*/
+        out.writeByte(data.getEncryption());
     }
 
 

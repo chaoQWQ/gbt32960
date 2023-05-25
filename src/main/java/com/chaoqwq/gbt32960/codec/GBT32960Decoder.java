@@ -70,7 +70,6 @@ public class GBT32960Decoder extends ReplayingDecoder<Void> {
         if (ResponseTag.COMMAND != frameHeader.getResponseTag()){
             log.info("收到应答消息,vin={},type={}, result={}", frameHeader.getVin(), frameHeader.getRequestType().name(), frameHeader.getResponseTag().name());
             in.skipBytes(actualReadableBytes());
-            ctx.close();
             return;
         }
         Object dataUnit = null;

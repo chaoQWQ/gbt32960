@@ -3,6 +3,8 @@ package com.chaoqwq.gbt32960.service;
 import com.chaoqwq.gbt32960.codec.GBT32960Decoder;
 import com.chaoqwq.gbt32960.codec.GBT32960Encoder;
 import com.chaoqwq.gbt32960.message.ResponseMessage;
+import com.chaoqwq.gbt32960.modle.DataUnit;
+import com.chaoqwq.gbt32960.modle.Location;
 import com.chaoqwq.gbt32960.paltform.LoginPlatform;
 import com.chaoqwq.gbt32960.paltform.PlatformMessage;
 import com.chaoqwq.gbt32960.protocol.ProtocolHandler;
@@ -13,6 +15,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Scanner;
@@ -43,7 +46,7 @@ public class Client {
                 .handler(new ChannelInitializer<Channel>() {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
-//                        ch.pipeline().addLast(new IdleStateHandler(0,0,5));
+                        ch.pipeline().addLast(new IdleStateHandler(0,0,60));
                         ch.pipeline().addLast(new GBT32960Decoder());
                         ch.pipeline().addLast(new GBT32960Encoder());
                         ch.pipeline().addLast(ProtocolHandler.getInstance());
@@ -103,8 +106,11 @@ public class Client {
                     responseMessage = sendLogoutMsg();
                 }
                 channel.writeAndFlush(responseMessage);
+            } else if ("0".equals(nextLine)) {
+                doConnect();
             } else {
                 log.info("连接已断开或失效");
+
             }
         }
     }
@@ -128,20 +134,27 @@ public class Client {
     }
     public ResponseMessage sendCarLocationMsg() {
         log.info("发送位置消息");
-        String VIN = "100000VIN00000005";
+        String VIN = "SMSTEST0000000001";
         ResponseMessage responseMessage = new ResponseMessage();
         responseMessage.setVin(VIN);
         PlatformMessage message = new PlatformMessage();
         message.setRequestType(RequestType.REAL_TIME);
         message.setResponseTag(ResponseTag.COMMAND);
         responseMessage.setMessage(message);
+        DataUnit dataUnit = new DataUnit();
+        Location location = new Location();
+        location.setGpsLatitude(27.1);
+        location.setGpsLongitude(128.5);
+        location.setGpsStatus(true);
+        dataUnit.setLocation(location);
+        responseMessage.setDataUnit(dataUnit);
         return responseMessage;
 
     }
 
     public ResponseMessage sendLogoutMsg() {
         log.info("发送登出消息");
-        String VIN = "100000VIN00000005";
+        String VIN = "SMSTEST0000000001";
         ResponseMessage responseMessage = new ResponseMessage();
         responseMessage.setVin(VIN);
         PlatformMessage message = new PlatformMessage();
@@ -149,8 +162,8 @@ public class Client {
         message.setResponseTag(ResponseTag.COMMAND);
         LoginPlatform data = LoginPlatform.newBuilder()
                 .setLoginDaySeq(200)
-                .setUsername("fengye202303")
-                .setPassword("e59586e6881111111111")
+                .setUsername("test12345678")
+                .setPassword("12345678912345678912")
                 .setEncryption(EncryptionType.PLAIN.getValue())
                 .build();
         message.setData(data);

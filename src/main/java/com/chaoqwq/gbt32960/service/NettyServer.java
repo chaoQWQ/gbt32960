@@ -46,7 +46,8 @@ public class NettyServer {
                 }
             });
             serverBootstrap.option(ChannelOption.SO_BACKLOG, 128);
-
+            //保持长连接状态
+            serverBootstrap.childOption(ChannelOption.SO_KEEPALIVE, true);
             ChannelFuture f = serverBootstrap.bind(LISTEN_PORT).sync();
             log.info("netty server listened on {}", LISTEN_PORT);
             f.channel().closeFuture().sync();

@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.chaoqwq.gbt32960.type.RequestType.PLATFORM_LOGIN;
+import static com.chaoqwq.gbt32960.type.RequestType.PLATFORM_LOGOUT;
 
 
 /**
@@ -44,7 +45,14 @@ public class ProtocolHandler extends ChannelDuplexHandler {
     }
 
     @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        super.channelInactive(ctx);
+        log.info("{}连接已经断开",ctx.channel());
+    }
+
+    @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        log.info("发送错误{}连接将断开",ctx.channel(),cause);
         ctx.close();
     }
 
@@ -191,22 +199,24 @@ public class ProtocolHandler extends ChannelDuplexHandler {
 
     private void platformLogoutResponse(ChannelHandlerContext context, Object msg) {
         GBT32960Message message = toGBT32960Message(msg);
-        LoginPlatform dataUnit = (LoginPlatform) message.getDataUnit();
-        String vin = message.getHeader().getVin();
-//        if (redisUtil().hHasKey(KEY, vin)) {
-//            boolean delete = deleteVin(vin, dataUnit.getLoginDaySeq());
-//            if (delete) {
-//                log.info("Platform logout success!");
-//                context.writeAndFlush(responseMessage(vin, RequestType.PLATFORM_LOGOUT, ResponseTag.SUCCESS));
-//            } else {
-//                log.info("Platform logout fail! 登入与登出序列化不匹配!");
-//                context.writeAndFlush(responseMessage(vin, RequestType.PLATFORM_LOGOUT, ResponseTag.FAILED));
-//            }
-//
-//        } else {
-//            context.writeAndFlush(responseMessage(vin, RequestType.PLATFORM_LOGOUT, ResponseTag.FAILED));
-//            log.info("未登录");
-//        }
+        // 获取数据头部信息
+        FrameHeader header = message.getHeader();
+        log.info("header: ==> " + header);
+        // 拿出平台登入的数据单元的用户名和密码结合jpa去寻找postgre上是否有相关数据
+        LoginPlatform loginPlatform = (LoginPlatform) message.getDataUnit();
+
+        String username = loginPlatform.getUsername();
+        String password = loginPlatform.getPassword();
+        boolean exist = USERNAME.equals(username) && PASSWORD.equals(password);
+        if (exist) {
+            context.writeAndFlush(responseMessage(header.getVin(), PLATFORM_LOGOUT, ResponseTag.SUCCESS));
+            log.info("Platform login success! login time: ==> "
+                    + TimeFormat.longTimeToZoneDateTime(loginPlatform.getLoginTime()));
+            context.close();
+        } else {
+            context.writeAndFlush(responseMessage(header.getVin(), PLATFORM_LOGOUT, ResponseTag.FAILED));
+            log.trace("Platform username or password error!");
+        }
     }
 
 
