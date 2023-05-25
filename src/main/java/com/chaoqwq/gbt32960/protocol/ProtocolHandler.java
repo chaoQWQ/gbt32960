@@ -198,25 +198,8 @@ public class ProtocolHandler extends ChannelDuplexHandler {
     }
 
     private void platformLogoutResponse(ChannelHandlerContext context, Object msg) {
-        GBT32960Message message = toGBT32960Message(msg);
-        // 获取数据头部信息
-        FrameHeader header = message.getHeader();
-        log.info("header: ==> " + header);
-        // 拿出平台登入的数据单元的用户名和密码结合jpa去寻找postgre上是否有相关数据
-        LoginPlatform loginPlatform = (LoginPlatform) message.getDataUnit();
-
-        String username = loginPlatform.getUsername();
-        String password = loginPlatform.getPassword();
-        boolean exist = USERNAME.equals(username) && PASSWORD.equals(password);
-        if (exist) {
-            context.writeAndFlush(responseMessage(header.getVin(), PLATFORM_LOGOUT, ResponseTag.SUCCESS));
-            log.info("Platform login success! login time: ==> "
-                    + TimeFormat.longTimeToZoneDateTime(loginPlatform.getLoginTime()));
-            context.close();
-        } else {
-            context.writeAndFlush(responseMessage(header.getVin(), PLATFORM_LOGOUT, ResponseTag.FAILED));
-            log.trace("Platform username or password error!");
-        }
+        log.info("退出登录：[{}]" , context.channel());
+        context.close();
     }
 
 
