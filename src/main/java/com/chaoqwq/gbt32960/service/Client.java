@@ -46,7 +46,7 @@ public class Client {
                 .handler(new ChannelInitializer<Channel>() {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
-                        ch.pipeline().addLast(new IdleStateHandler(0,0,60));
+                        ch.pipeline().addLast(new IdleStateHandler(0,5,0));
                         ch.pipeline().addLast(new GBT32960Decoder());
                         ch.pipeline().addLast(new GBT32960Encoder());
                         ch.pipeline().addLast(ProtocolHandler.getInstance());

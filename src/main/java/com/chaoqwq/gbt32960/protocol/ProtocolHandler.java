@@ -20,8 +20,7 @@ import io.netty.util.AttributeKey;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import static com.chaoqwq.gbt32960.type.RequestType.PLATFORM_LOGIN;
-import static com.chaoqwq.gbt32960.type.RequestType.PLATFORM_LOGOUT;
+import static com.chaoqwq.gbt32960.type.RequestType.*;
 
 
 /**
@@ -65,11 +64,17 @@ public class ProtocolHandler extends ChannelDuplexHandler {
                 ctx.close();
             }
             if (e.state() == IdleState.WRITER_IDLE) {
-                log.info("写空闲，断开连接");
-                ctx.close();
+//                log.info("写空闲，断开连接");
+//                ctx.close();
+                //客户端添加心跳逻辑
+                sendHeartBeat(ctx);
             }
         }
 
+    }
+
+    private void sendHeartBeat(ChannelHandlerContext ctx) {
+        ctx.writeAndFlush(responseMessage("11111111111111111", RequestType.HEART_BEAT, ResponseTag.COMMAND));
     }
 
     private void platformLoginResponse(ChannelHandlerContext context, Object msg) {
